@@ -8,35 +8,56 @@ st.title("Relatório - Última Atualização por Lubrificante")
 # URL da planilha publicada em CSV
 csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
-# Leitura e tratamento dos dados
+# Leitura da planilha
 data = pd.read_csv(csv_url)
 data.columns = data.columns.str.strip().str.upper()
 
-# Converter campos numéricos
+# Converter colunas numéricas
 data["TOTAL"] = pd.to_numeric(data["TOTAL"], errors="coerce")
 data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce")
 
-# Buscar o último registro por Kardex
-ultimos = data.sort_values("DATA").groupby("KARDEX").last().reset_index()
+# Pegar a última data por Kardex
+ultimos = data.sort_values("DATA").groupby("KARDEX", as_index=False).last()
 
-# Calcular diferença
+# Calcula diferença
 ultimos["DIFERENÇA"] = ultimos["SISTEMA"] - ultimos["TOTAL"]
 
-# Formatar a diferença com setas
+# Formatação da coluna Diferença
 def formatar_diferenca(valor):
     if pd.isna(valor):
         return "—"
     if valor > 0:
-        return f"🟢 ↑ {valor:.0f}"
+        return f"🟢 ↑ {int(valor)}"
     elif valor < 0:
-        return f"🔴 ↓ {abs(valor):.0f}"
+        return f"🔴 ↓ {abs(int(valor))}"
     else:
         return "0"
 
-ultimos["DIFERENÇA"] = ultimos["DIFERENÇA"].apply(formatar_diferenca)
+def formatar_seta(valor):
+    if pd.isna(valor):
+        return "—"
+    if valor > 0:
+        return f"↑ {int(valor)}"
+    elif valor < 0:
+        return f"↓ {abs(int(valor))}"
+    else:
+        return "0"
 
-# Selecionar e renomear as colunas
+ultimos["DIFERENÇA"] = ultimos["DIFERENÇA"].apply(formatar_seta)
+
+# Selecionar colunas e centralizar Kardex, Total, Sistema
 resultado = ultimos[["DATA", "KARDEX", "LUBRIFICANTE", "TOTAL", "SISTEMA", "DIFERENÇA"]]
 
-# Mostrar tabela sem o índice lateral
-st.dataframe(resultado.reset_index(drop=True), use_container_width=True)
+# Exibir a tabela com estilo
+def centralizar(col):
+    return 'text-align: center'
+
+st.write(
+    resultado.style
+        .format(na_rep="—")
+        .set_properties(subset=["KARDEX", "TOTAL", "SISTEMA"], **{'text-align': 'center'})
+        .set_table_styles([dict(selector='th', props=[('text-align', 'center')])])
+        .hide(axis="index")
+        .to_html(),
+    unsafe_allow_html=True,
+)
