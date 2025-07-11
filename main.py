@@ -6,11 +6,10 @@ from gspread_dataframe import get_as_dataframe
 from google.oauth2.service_account import Credentials
 import json
 
-# Autenticação Google a partir de um arquivo local
-with open("service_account.json") as source:
-    info = json.load(source)
-
+# Autenticação Google
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+with open("/mnt/data/9790536c-91ee-4feb-ad55-9db572c84b44.json") as source:
+    info = json.load(source)
 credentials = Credentials.from_service_account_info(info, scopes=scope)
 client = gspread.authorize(credentials)
 
