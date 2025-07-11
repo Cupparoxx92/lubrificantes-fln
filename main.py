@@ -5,27 +5,33 @@ import pandas as pd
 st.set_page_config(page_title="Relatório Estoque", layout="wide")
 st.title("📊 Relatório - Última Atualização por Lubrificante")
 
-# Link do Google Sheets (exportando CSV da aba correta)
+# Lê toda a planilha e ignora as primeiras 902 linhas
 sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=0"
+df = pd.read_csv(sheet_url, skiprows=902)
 
-# Lê a planilha a partir da linha 903, selecionando apenas as colunas A, B, E, F, G (índices 0, 1, 4, 5, 6)
-df = pd.read_csv(sheet_url, skiprows=902, usecols=[0, 1, 4, 5, 6], header=None)
-df.columns = ["Data", "Kardex", "Total", "Sistema", "Lubrificante"]
+# Exibe os nomes das colunas para validar
+st.write("Colunas encontradas:", list(df.columns))
 
-# Converte tipos
+# Renomeia as colunas (ajuste conforme os nomes reais da sua planilha!)
+df.columns = ["Data", "Kardex", "Medida", "Galão", "Total", "Sistema", "Lubrificante"]
+
+# Seleciona apenas as colunas necessárias
+df = df[["Data", "Kardex", "Total", "Sistema", "Lubrificante"]]
+
+# Converte os tipos
 df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
 df["Total"] = pd.to_numeric(df["Total"], errors="coerce").fillna(0)
 df["Sistema"] = pd.to_numeric(df["Sistema"], errors="coerce").fillna(0)
 
-# Remove registros sem Kardex ou Data
+# Filtra linhas válidas
 df = df.dropna(subset=["Kardex", "Data"])
 
-# Pega a última data por Kardex
+# Busca a última data de cada Kardex
 ultimos = df.sort_values("Data").groupby("Kardex", as_index=False).last()
 
-# Calcula a diferença (Sistema - Total)
+# Calcula a diferença
 ultimos["Diferença"] = ultimos["Sistema"] - ultimos["Total"]
 
-# Exibe o resultado
+# Exibe o resultado final
 resultado = ultimos[["Data", "Kardex", "Lubrificante", "Total", "Sistema", "Diferença"]]
 st.dataframe(resultado, use_container_width=True)
