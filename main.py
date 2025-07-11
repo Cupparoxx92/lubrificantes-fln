@@ -10,10 +10,11 @@ df = pd.read_csv(sheet_url, header=None)
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
 
-# Remove linhas onde KARDEX, TOTAL ou SISTEMA estejam vazios
+# Remove linhas vazias e onde KARDEX não for numérico
 df = df.dropna(subset=["KARDEX", "TOTAL", "SISTEMA"])
+df = df[df["KARDEX"].apply(lambda x: str(x).isdigit())]
 
-# Converte TOTAL e SISTEMA para inteiro corretamente
+# Converte TOTAL e SISTEMA para inteiro
 df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0).astype(int)
 df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0).astype(int)
 
