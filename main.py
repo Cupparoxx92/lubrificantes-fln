@@ -1,32 +1,27 @@
 import streamlit as st
 import pandas as pd
 
-# Configuração da página
-st.set_page_config(page_title="Estoque Lubrificantes", layout="wide")
+# URL da planilha
+sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789"
+oleo_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=J2:K12"
+
+# Lendo as planilhas
+data = pd.read_csv(sheet_url, skiprows=1, nrows=11)
+oleos = pd.read_csv(oleo_url, header=None, names=["KARDEX", "OLEO"])
+
+# Convertendo colunas numéricas
+data["Total"] = pd.to_numeric(data["Total"], errors="coerce", downcast="float")
+data["SISTEMA"] = pd.to_numeric(data["SISTEMA"].astype(str).str.replace(",", "."), errors="coerce")
+
+# Calculando a diferença
+data["Diferença"] = data["Total"] - data["SISTEMA"]
+
+# Mesclando com a descrição do óleo
+resultado = pd.merge(data, oleos, left_on="KARDEX", right_on="KARDEX", how="left")
+
+# Selecionando as colunas para exibir
+tabela_final = resultado[["KARDEX", "OLEO", "Total", "SISTEMA", "Diferença"]]
+
+# Exibindo no app
 st.title("Resumo do Estoque Atual:")
-
-# URLs e intervalos da planilha
-sheet_id = "1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI"
-gid = "879658789"
-data_range = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}&range=A1:G12"
-nomes_range = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}&range=J2:K12"
-
-# Leitura dos dados
-df = pd.read_csv(data_range, header=0)
-nomes = pd.read_csv(nomes_range, header=None, names=["KARDEX", "OLEO"])
-
-# Conversão das colunas numéricas (corrige erros caso tenha texto ou vazios)
-df["Total"] = pd.to_numeric(df["Total"], errors="coerce").fillna(0)
-df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0)
-
-# Cálculo da diferença
-df["Diferença"] = df["Total"] - df["SISTEMA"]
-
-# Junção com o nome dos óleos
-resultado = pd.merge(df, nomes, on="KARDEX", how="left")
-
-# Reordena as colunas para exibir melhor
-resultado = resultado[["KARDEX", "OLEO", "Total", "SISTEMA", "Diferença"]]
-
-# Exibição no app
-st.dataframe(resultado)
+st.dataframe(tabela_final)
