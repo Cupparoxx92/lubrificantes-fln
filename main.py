@@ -1,31 +1,37 @@
 import pandas as pd
 
-# URL da planilha no formato CSV
+# Link da planilha publicada no formato CSV
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
-# Lê todas as linhas da planilha
+# Lê a planilha completa
 df = pd.read_csv(sheet_url, header=None)
 
-# Seleciona as colunas: A (0), B (1), E (4), F (5), G (6)
+# Seleciona as colunas A (0), B (1), E (4), F (5), G (6)
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
 
-# Remove linhas com TOTAL ou SISTEMA vazios
-df = df.dropna(subset=["TOTAL", "SISTEMA", "KARDEX"])
+# Remove linhas vazias em KARDEX, TOTAL, SISTEMA
+df = df.dropna(subset=["KARDEX", "TOTAL", "SISTEMA"])
 
-# Converte TOTAL e SISTEMA para float
-df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0)
-df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0)
+# Converte TOTAL e SISTEMA para inteiro
+df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0).astype(int)
+df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0).astype(int)
 
-# Converte a DATA para data real (opcional)
+# Converte a data
 df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
 
-# Pega a última data para cada KARDEX
+# Pega a última data de cada Kardex
 ultimos = df.sort_values("DATA").groupby("KARDEX", as_index=False).last()
 
-# Calcula diferença e acuracidade
+# Calcula diferença
 ultimos["DIFERENCA"] = ultimos["TOTAL"] - ultimos["SISTEMA"]
-ultimos["ACURACIDADE"] = (ultimos[["TOTAL", "SISTEMA"]].min(axis=1) / ultimos[["TOTAL", "SISTEMA"]].max(axis=1) * 100).fillna(0).round(1).astype(str) + "%"
+
+# Calcula a acuracidade (mantém nos cards)
+ultimos["ACURACIDADE"] = (
+    (ultimos[["TOTAL", "SISTEMA"]].min(axis=1) / ultimos[["TOTAL", "SISTEMA"]].max(axis=1))
+    .fillna(0)
+    .round(2) * 100
+).astype(str) + "%"
 
 # ---------------------- HTML ----------------------
 
@@ -63,7 +69,6 @@ th { background-color: #e0e0e0; color: #333; }
             <th>TOTAL</th>
             <th>SISTEMA</th>
             <th>DIFERENÇA</th>
-            <th>ACURACIDADE</th>
         </tr>
         {%TABELA_ROWS%}
         </table>
@@ -84,7 +89,7 @@ th { background-color: #e0e0e0; color: #333; }
 tabela_html = ""
 for _, row in ultimos.iterrows():
     cor = 'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'
-    tabela_html += f"<tr><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td><td>{row['ACURACIDADE']}</td></tr>"
+    tabela_html += f"<tr><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td></tr>"
 
 # Monta os cards
 cards_html = ""
@@ -109,10 +114,10 @@ for _, row in ultimos.iterrows():
     </div>
     """
 
-# Substitui no HTML final
+# Substitui no HTML
 html = html.replace("{%TABELA_ROWS%}", tabela_html).replace("{%CARDS%}", cards_html)
 
-# Salva no arquivo HTML
+# Salva no arquivo
 with open("relatorio.html", "w", encoding="utf-8") as f:
     f.write(html)
 
