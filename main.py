@@ -4,13 +4,11 @@ import plotly.graph_objects as go
 import gspread
 from gspread_dataframe import get_as_dataframe
 from google.oauth2.service_account import Credentials
-import json
 
 # Autenticação Google
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-with open("/mnt/data/9790536c-91ee-4feb-ad55-9db572c84b44.json") as source:
-    info = json.load(source)
-credentials = Credentials.from_service_account_info(info, scopes=scope)
+with open("/mnt/data/02ae0f52-81b3-4cf9-850c-ac5b0c480dc7.json") as source:
+    credentials = Credentials.from_service_account_file(source.name, scopes=scope)
 client = gspread.authorize(credentials)
 
 # Leitura dos dados da planilha
