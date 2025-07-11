@@ -1,11 +1,18 @@
 import pandas as pd
 
-# Lê o CSV pegando as colunas corretas
-# usecols=[0, 4, 5, 6] → 0 = KARDEX, 4 = TOTAL, 5 = SISTEMA, 6 = LUBRIFICANTE
-# names = nomes das colunas no DataFrame
-# skiprows=1 → pula a primeira linha se for cabeçalho. Se seu arquivo NÃO tiver cabeçalho, apaga isso.
-data = pd.read_csv("lubrificantes.csv", header=None, usecols=[0, 4, 5, 6],
-                   names=["KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"], skiprows=1)
+# URL da sua planilha (publicada como CSV)
+sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
+
+# Lê a planilha completa
+data = pd.read_csv(sheet_url, header=None)
+
+# Seleciona as colunas corretas: A (0), E (4), F (5), G (6)
+data = data[[0, 4, 5, 6]]
+data.columns = ["KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
+
+# Converte TOTAL e SISTEMA para float
+data["TOTAL"] = pd.to_numeric(data["TOTAL"], errors="coerce").fillna(0)
+data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce").fillna(0)
 
 # Calcula diferença e acuracidade correta
 data["DIFERENCA"] = data["TOTAL"] - data["SISTEMA"]
@@ -92,7 +99,7 @@ for _, row in data.iterrows():
     </div>
     """
 
-# Substitui no HTML
+# Substitui no HTML final
 html = html.replace("{%TABELA_ROWS%}", tabela_html).replace("{%CARDS%}", cards_html)
 
 # Salva no arquivo HTML
