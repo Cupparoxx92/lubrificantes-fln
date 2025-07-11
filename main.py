@@ -10,7 +10,7 @@ df = pd.read_csv(sheet_url, header=None)
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
 
-# Remove linhas vazias e onde KARDEX não for numérico
+# Remove linhas onde KARDEX, TOTAL ou SISTEMA estão vazios e KARDEX não é numérico
 df = df.dropna(subset=["KARDEX", "TOTAL", "SISTEMA"])
 df = df[df["KARDEX"].apply(lambda x: str(x).isdigit())]
 
@@ -18,8 +18,8 @@ df = df[df["KARDEX"].apply(lambda x: str(x).isdigit())]
 df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0).astype(int)
 df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0).astype(int)
 
-# Converte DATA para datetime (opcional)
-df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
+# Corrige a DATA como dia/mês/ano
+df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
 
 # Pega a última data registrada para cada KARDEX
 ultimos = df.sort_values("DATA").groupby("KARDEX", as_index=False).last()
