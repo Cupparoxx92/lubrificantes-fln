@@ -6,27 +6,27 @@ sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iB
 # Lê a planilha completa
 df = pd.read_csv(sheet_url, header=None)
 
-# Seleciona as colunas A (0), B (1), E (4), F (5), G (6)
+# Seleciona as colunas corretas: A (0), B (1), E (4), F (5), G (6)
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
 
-# Remove linhas vazias em KARDEX, TOTAL, SISTEMA
+# Remove linhas onde KARDEX, TOTAL ou SISTEMA estejam vazios
 df = df.dropna(subset=["KARDEX", "TOTAL", "SISTEMA"])
 
-# Converte TOTAL e SISTEMA para inteiro
+# Converte TOTAL e SISTEMA para inteiro corretamente
 df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0).astype(int)
 df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0).astype(int)
 
-# Converte a data
+# Converte DATA para datetime (opcional)
 df["DATA"] = pd.to_datetime(df["DATA"], errors="coerce")
 
-# Pega a última data de cada Kardex
+# Pega a última data registrada para cada KARDEX
 ultimos = df.sort_values("DATA").groupby("KARDEX", as_index=False).last()
 
 # Calcula diferença
 ultimos["DIFERENCA"] = ultimos["TOTAL"] - ultimos["SISTEMA"]
 
-# Calcula a acuracidade (mantém nos cards)
+# Calcula acuracidade (apenas para os cards)
 ultimos["ACURACIDADE"] = (
     (ultimos[["TOTAL", "SISTEMA"]].min(axis=1) / ultimos[["TOTAL", "SISTEMA"]].max(axis=1))
     .fillna(0)
@@ -64,6 +64,7 @@ th { background-color: #e0e0e0; color: #333; }
     <div style="width: 60%; padding-right: 20px;">
         <table>
         <tr>
+            <th>DATA</th>
             <th>KARDEX</th>
             <th>LUBRIFICANTE</th>
             <th>TOTAL</th>
@@ -85,11 +86,12 @@ th { background-color: #e0e0e0; color: #333; }
 </html>
 """
 
-# Monta as linhas da tabela
+# Monta a tabela
 tabela_html = ""
 for _, row in ultimos.iterrows():
     cor = 'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'
-    tabela_html += f"<tr><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td></tr>"
+    data_str = row['DATA'].strftime('%d/%m/%Y') if pd.notnull(row['DATA']) else '-'
+    tabela_html += f"<tr><td>{data_str}</td><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td></tr>"
 
 # Monta os cards
 cards_html = ""
