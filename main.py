@@ -2,35 +2,33 @@ import streamlit as st
 import pandas as pd
 
 # Configuração da página
-st.set_page_config(page_title="Estoque Lubrificantes", layout="wide")
-st.title("📊 Situação do Estoque por Lubrificante")
+st.set_page_config(page_title="Situação do Estoque por Lubrificante", layout="wide")
+st.title("Situação do Estoque por Lubrificante")
 
-# URL base da planilha
-sheet_id = "1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI"
-gid = "879658789"
+# URL e intervalo da planilha
+sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=A1:G12"
+lub_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=J2:K12"
 
-# Leitura do intervalo A1:G12
-url_dados = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}&range=A1:G12"
-df_dados = pd.read_csv(url_dados)
+# Leitura dos dados
+df = pd.read_csv(sheet_url)
+nomes = pd.read_csv(lub_url, header=None, names=["KARDEX", "OLEO"])
 
-# Leitura do intervalo J2:K12 (KARDEX e Nome do Lubrificante)
-url_nomes = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}&range=J2:K12"
-df_nomes = pd.read_csv(url_nomes, header=None, names=["KARDEX", "Óleo"])
-
-# Junta as duas tabelas usando a coluna KARDEX
-df = pd.merge(df_dados, df_nomes, on="KARDEX", how="left")
+# Conversão dos campos numéricos
+df["Total"] = pd.to_numeric(df["Total"], errors='coerce')
+df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors='coerce')
 
 # Calcula a diferença
 df["Diferença"] = df["Total"] - df["SISTEMA"]
 
-# Define a situação
-df["Situação"] = df["Diferença"].apply(lambda x: "✅ Sobrando" if x > 0 else ("🔴 Faltando" if x < 0 else "✔️ Certo"))
+# Junta o nome do óleo
+df = df.merge(nomes, on="KARDEX", how="left")
 
-# Exibe a tabela final
-st.subheader("📋 Resumo por Lubrificante")
-st.dataframe(df[["KARDEX", "Óleo", "Total", "SISTEMA", "Diferença", "Situação"]])
+# Mostra a tabela no app
+st.subheader("Resumo do Estoque Atual:")
+st.dataframe(df[["KARDEX", "OLEO", "Total", "SISTEMA", "Diferença"]])
 
-# Exibe resumo em texto
-st.subheader("🔍 Detalhes")
+# Exibe um resumo separado para cada óleo
+st.subheader("Situação por Lubrificante:")
 for _, row in df.iterrows():
-    st.write(f"KARDEX **{row['KARDEX']}**, **{row['Óleo']}** → {row['Situação']} (Diferença: {round(row['Diferença'], 2)})")
+    situacao = "Faltando" if row["Diferença"] < 0 else "Sobrando"
+    st.write(f"🔧 {row['OLEO']}: {situacao} {abs(row['Diferença'])}")
