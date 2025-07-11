@@ -1,98 +1,93 @@
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
-from google.oauth2 import service_account
-from gspread_dataframe import get_as_dataframe
 import gspread
+from gspread_dataframe import get_as_dataframe
+from google.oauth2.service_account import Credentials
 
-# Autenticação com Google Sheets
+# Autenticação Google
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-credentials = service_account.Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
+credentials = Credentials.from_service_account_info(st.secrets["gcp_service_account"], scopes=scope)
 client = gspread.authorize(credentials)
 
-# Leitura da planilha e aba
+# Leitura dos dados da planilha
 spreadsheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/edit")
 sheet = spreadsheet.get_worksheet(0)
-
-# Leitura dos dados ignorando as linhas 2 a 902
 data = get_as_dataframe(sheet, evaluate_formulas=True)
-data = data.dropna(subset=["KARDEX"])  # Filtrar linhas válidas
+data = data.dropna(subset=["KARDEX"])  # Somente linhas válidas
 
-# Converter colunas numéricas corretamente
+# Conversão de colunas numéricas (garante leitura correta mesmo com fórmulas)
 data["TOTAL"] = pd.to_numeric(data["TOTAL"], errors="coerce")
 data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce")
 
-# Pegar o último registro de cada óleo
-ultimos_registros = data.sort_values("DATA").groupby("KARDEX").tail(1)
-ultimos_registros = ultimos_registros.sort_values("KARDEX")
+# Última leitura por Kardex
+ultimos = data.sort_values("DATA").groupby("KARDEX").tail(1).sort_values("KARDEX")
 
-# Calcular a diferença
-ultimos_registros["DIFERENCA"] = ultimos_registros["TOTAL"] - ultimos_registros["SISTEMA"]
+# Cálculo da diferença e conversão para int (substitui NaN por 0)
+ultimos["DIFERENCA"] = (ultimos["TOTAL"] - ultimos["SISTEMA"]).fillna(0).astype(int)
+ultimos["TOTAL"] = ultimos["TOTAL"].fillna(0).astype(int)
+ultimos["SISTEMA"] = ultimos["SISTEMA"].fillna(0).astype(int)
 
-# Formatar os números como inteiros
-ultimos_registros["TOTAL"] = ultimos_registros["TOTAL"].fillna(0).astype(int)
-ultimos_registros["SISTEMA"] = ultimos_registros["SISTEMA"].fillna(0).astype(int)
-ultimos_registros["DIFERENCA"] = ultimos_registros["DIFERENCA"].fillna(0).astype(int)
-
-# Tabela principal
+# Layout principal
+st.set_page_config(layout="wide")
 st.title("Relatório - Última Atualização por Lubrificante")
-tabela = ultimos_registros[["KARDEX", "LUBRIFICANTE", "TOTAL", "SISTEMA", "DIFERENCA"]]
 
-# Estilo de cores nas diferenças
+# Exibição da tabela
 def color_diferenca(val):
-    if val > 0:
-        return f"color: green"
-    elif val < 0:
-        return f"color: red"
-    else:
-        return ""
+    return "color: green" if val > 0 else ("color: red" if val < 0 else "")
 
-st.dataframe(
-    tabela.style.applymap(color_diferenca, subset=["DIFERENCA"]),
-    use_container_width=True
-)
+tabela = ultimos[["KARDEX", "LUBRIFICANTE", "TOTAL", "SISTEMA", "DIFERENCA"]]
+st.dataframe(tabela.style.applymap(color_diferenca, subset=["DIFERENCA"]), use_container_width=True)
 
-# Gráficos laterais
+# Cards laterais com barras horizontais
 st.subheader("Diferença por Óleo")
-cols = st.columns(2)
 
-for i, (_, row) in enumerate(ultimos_registros.iterrows()):
-    col = cols[i % 2]
+# Quebra a tela horizontalmente
+main_col, cards_col = st.columns([3, 2])
 
-    # Calcular acuracidade
-    total = row["TOTAL"]
-    sistema = row["SISTEMA"]
-    if total + sistema == 0:
-        acuracidade = 0
-    else:
-        acuracidade = round(100 * (1 - abs(total - sistema) / max(total, sistema)), 1)
+with cards_col:
+    for _, row in ultimos.iterrows():
+        kardex = row["KARDEX"]
+        nome = row["LUBRIFICANTE"]
+        fisico = row["TOTAL"]
+        sistema = row["SISTEMA"]
+        diferenca = fisico - sistema
 
-    with col:
-        st.markdown(f"### {row['KARDEX']} - {row['LUBRIFICANTE']}")
+        if fisico + sistema == 0:
+            acuracidade = 0
+        else:
+            acuracidade = round(100 * (1 - abs(diferenca) / max(fisico, sistema)), 1)
+
+        st.markdown(f"#### {kardex} - {nome}")
 
         fig = go.Figure()
         fig.add_trace(go.Bar(
-            y=[""],
-            x=[total],
-            orientation='h',
-            name='Físico',
-            marker_color='blue',
-            text=[f"{total}"],
-            textposition='inside'
+            y=["Estoque"],
+            x=[fisico],
+            orientation="h",
+            name="Físico",
+            marker_color="blue",
+            text=[f"{fisico}"],
+            textposition="inside"
         ))
         fig.add_trace(go.Bar(
-            y=[""],
+            y=["Estoque"],
             x=[sistema],
-            orientation='h',
-            name='Sistema',
-            marker_color='orange',
+            orientation="h",
+            name="Sistema",
+            marker_color="orange",
             text=[f"{sistema}"],
-            textposition='inside'
+            textposition="inside"
         ))
-        fig.update_layout(barmode='overlay', height=140, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
+        fig.update_layout(barmode="overlay", height=100, margin=dict(l=0, r=0, t=0, b=0), showlegend=False)
 
         st.plotly_chart(fig, use_container_width=True)
 
-        diferenca = total - sistema
-        st.write(f"Diferença (L): {'+' if diferenca > 0 else ''}{diferenca}")
-        st.write(f"% Acuracidade: {acuracidade}%")
+        cor = "green" if diferenca > 0 else ("red" if diferenca < 0 else "black")
+        seta = "↑" if diferenca > 0 else ("↓" if diferenca < 0 else "")
+
+        st.markdown(f"<span style='color:{cor}'>{seta}{diferenca}L</span>", unsafe_allow_html=True)
+        st.write(f"Acuracidade: {acuracidade}%")
+
+# Remove a coluna DATA da tabela e ajusta a leitura para fórmulas
+# A tabela principal e os cards ficam exibidos simultaneamente.
