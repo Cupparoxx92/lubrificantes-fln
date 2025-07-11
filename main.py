@@ -2,33 +2,32 @@ import streamlit as st
 import pandas as pd
 
 # Configuração da página
-st.set_page_config(page_title="Relatório Estoque", layout="wide")
-st.title("📊 Relatório - Última Atualização por Lubrificante")
+st.set_page_config(page_title="Relatório - Última Atualização por Lubrificante", layout="wide")
+st.title("Relatório - Última Atualização por Lubrificante")
 
-# Leitura completa da planilha
-sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=0"
-df = pd.read_csv(sheet_url)
+# URL do CSV publicado
+csv_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
-# Exibe as colunas encontradas
-st.write("Colunas encontradas:", list(df.columns))
+# Leitura do CSV completo
+data = pd.read_csv(csv_url)
 
-# Renomeia as colunas (conforme a ordem da planilha)
-df.columns = ["Data", "Kardex", "Medida", "Galão", "Total", "Sistema", "Lubrificante"]
+# Converte a coluna de data
+data["Data"] = pd.to_datetime(data["DATA"], dayfirst=True, errors="coerce")
 
-# Converte tipos
-df["Data"] = pd.to_datetime(df["Data"], dayfirst=True, errors="coerce")
-df["Total"] = pd.to_numeric(df["Total"], errors="coerce").fillna(0)
-df["Sistema"] = pd.to_numeric(df["Sistema"], errors="coerce").fillna(0)
+# Para cada Kardex, pega o registro mais recente
+ultimos_registros = data.sort_values("Data").groupby("KARDEX").last().reset_index()
 
-# Mantém apenas linhas válidas
-df = df.dropna(subset=["Kardex", "Data"])
+# Monta a tabela final
+relatorio = pd.DataFrame({
+    "Data": ultimos_registros["Data"],
+    "Kardex": ultimos_registros["KARDEX"],
+    "Lubrificante": ultimos_registros["LUBRIFICANTE"],
+    "Total": pd.to_numeric(ultimos_registros["Total"], errors="coerce"),
+    "Sistema": pd.to_numeric(ultimos_registros["Sistema"], errors="coerce"),
+})
 
-# Busca a última data de cada Kardex
-ultimos = df.sort_values("Data").groupby("Kardex", as_index=False).last()
+# Calcula a diferença (Sistema - Total)
+relatorio["Diferença"] = relatorio["Sistema"] - relatorio["Total"]
 
-# Calcula a diferença
-ultimos["Diferença"] = ultimos["Sistema"] - ultimos["Total"]
-
-# Reordena e exibe
-resultado = ultimos[["Data", "Kardex", "Lubrificante", "Total", "Sistema", "Diferença"]]
-st.dataframe(resultado, use_container_width=True)
+# Mostra o DataFrame no app
+st.dataframe(relatorio)
