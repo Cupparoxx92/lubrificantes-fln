@@ -1,16 +1,15 @@
 import pandas as pd
 
-# Simulação dos dados (você vai trocar depois por Google Sheets)
-data = pd.DataFrame({
-    "KARDEX": [40300012, 40300040],
-    "LUBRIFICANTE": ["OLEO (RETARDER) ATF DEXRON III", "ANTI CORROSIVO ORGANICO LARANJA"],
-    "TOTAL": [150, 90],
-    "SISTEMA": [130, 100]
-})
+# Lê o CSV pegando as colunas corretas
+# usecols=[0, 4, 5, 6] → 0 = KARDEX, 4 = TOTAL, 5 = SISTEMA, 6 = LUBRIFICANTE
+# names = nomes das colunas no DataFrame
+# skiprows=1 → pula a primeira linha se for cabeçalho. Se seu arquivo NÃO tiver cabeçalho, apaga isso.
+data = pd.read_csv("lubrificantes.csv", header=None, usecols=[0, 4, 5, 6],
+                   names=["KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"], skiprows=1)
 
-# Calcula diferença e acuracidade correta (máximo 100%)
+# Calcula diferença e acuracidade correta
 data["DIFERENCA"] = data["TOTAL"] - data["SISTEMA"]
-data["ACURACIDADE"] = (data[["TOTAL", "SISTEMA"]].min(axis=1) / data[["TOTAL", "SISTEMA"]].max(axis=1) * 100).round(1).astype(str) + "%"
+data["ACURACIDADE"] = (data[["TOTAL", "SISTEMA"]].min(axis=1) / data[["TOTAL", "SISTEMA"]].max(axis=1) * 100).fillna(0).round(1).astype(str) + "%"
 
 # HTML base
 html = """
@@ -70,10 +69,10 @@ for _, row in data.iterrows():
     cor = 'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'
     tabela_html += f"<tr><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td><td>{row['ACURACIDADE']}</td></tr>"
 
-# Monta os cards menores
+# Monta os cards
 cards_html = ""
 for _, row in data.iterrows():
-    max_value = max(row["TOTAL"], row["SISTEMA"])
+    max_value = max(row["TOTAL"], row["SISTEMA"]) if max(row["TOTAL"], row["SISTEMA"]) != 0 else 1
     fisico_percent = int(row["TOTAL"] / max_value * 100)
     sistema_percent = int(row["SISTEMA"] / max_value * 100)
 
@@ -86,15 +85,17 @@ for _, row in data.iterrows():
         <div class='bar-container'>
             <div class='bar-sistema' style='width:{sistema_percent}%'>{row['SISTEMA']} L (Sistema)</div>
         </div>
-        Diferença: <strong style='color:{'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'}'>{row['DIFERENCA']}</strong><br>
-        Acuracidade: {row['ACURACIDADE']}
+        <div>
+            Diferença: <strong style='color:{'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'}'>{row['DIFERENCA']}</strong> |
+            Acuracidade: {row['ACURACIDADE']}
+        </div>
     </div>
     """
 
 # Substitui no HTML
 html = html.replace("{%TABELA_ROWS%}", tabela_html).replace("{%CARDS%}", cards_html)
 
-# Salva o arquivo HTML
+# Salva no arquivo HTML
 temp_html_file = "relatorio.html"
 with open(temp_html_file, "w", encoding="utf-8") as f:
     f.write(html)

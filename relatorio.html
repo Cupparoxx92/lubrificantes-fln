@@ -9,17 +9,19 @@ body { font-family: Arial; margin: 20px; background-color: #f9f9f9; }
 table { border-collapse: collapse; width: 100%; font-size: 14px; }
 th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
 th { background-color: #e0e0e0; color: #333; }
-.card { width: 100%; margin-bottom: 20px; border: 1px solid #ddd; padding: 15px; border-radius: 10px; box-shadow: 2px 2px 5px rgba(0,0,0,0.1); background-color: white; }
-.bar-container { height: 20px; background-color: #ddd; margin-bottom: 8px; border-radius: 4px; overflow: hidden; }
-.bar-fisico { background-color: blue; height: 100%; color: white; text-align: center; }
-.bar-sistema { background-color: orange; height: 100%; color: white; text-align: center; }
+
+.card { width: 100%; margin-bottom: 12px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: white; font-size: 13px; }
+
+.bar-container { height: 16px; background-color: #ddd; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }
+.bar-fisico { background-color: blue; height: 100%; color: white; text-align: center; font-size: 11px; }
+.bar-sistema { background-color: orange; height: 100%; color: white; text-align: center; font-size: 11px; }
 </style>
 </head>
 <body>
 
 <h2 style="text-align: center;">Relatório - Última Atualização</h2>
 
-<div style="display: flex; justify-content: space-between;">
+<div style="display: flex; justify-content: space-between; align-items: flex-start;">
 
     <!-- Tabela -->
     <div style="width: 60%; padding-right: 20px;">
@@ -32,7 +34,7 @@ th { background-color: #e0e0e0; color: #333; }
             <th>DIFERENÇA</th>
             <th>ACURACIDADE</th>
         </tr>
-        <tr><td>40300012</td><td>OLEO (RETARDER) ATF DEXRON III</td><td>150</td><td>130</td><td style='color:green'>20</td><td>115.4%</td></tr><tr><td>40300040</td><td>ANTI CORROSIVO ORGANICO LARANJA</td><td>90</td><td>100</td><td style='color:red'>-10</td><td>90.0%</td></tr>
+        <tr><td>40300012</td><td>OLEO (RETARDER) ATF DEXRON III</td><td>150</td><td>130</td><td style='color:green'>20</td><td>86.7%</td></tr><tr><td>40300040</td><td>ANTI CORROSIVO ORGANICO LARANJA</td><td>90</td><td>100</td><td style='color:red'>-10</td><td>90.0%</td></tr>
         </table>
     </div>
 
@@ -40,7 +42,7 @@ th { background-color: #e0e0e0; color: #333; }
     <div style="width: 35%;">
         
     <div class='card'>
-        <strong>40300012 - OLEO (RETARDER) ATF DEXRON III</strong><br><br>
+        <strong>40300012 - OLEO (RETARDER) ATF DEXRON III</strong><br>
         <div class='bar-container'>
             <div class='bar-fisico' style='width:100%'>150 L (Físico)</div>
         </div>
@@ -48,11 +50,11 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:86%'>130 L (Sistema)</div>
         </div>
         Diferença: <strong style='color:green'>20</strong><br>
-        Acuracidade: 115.4%
+        Acuracidade: 86.7%
     </div>
     
     <div class='card'>
-        <strong>40300040 - ANTI CORROSIVO ORGANICO LARANJA</strong><br><br>
+        <strong>40300040 - ANTI CORROSIVO ORGANICO LARANJA</strong><br>
         <div class='bar-container'>
             <div class='bar-fisico' style='width:90%'>90 L (Físico)</div>
         </div>
