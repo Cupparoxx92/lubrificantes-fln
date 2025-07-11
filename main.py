@@ -1,30 +1,34 @@
 import streamlit as st
 import pandas as pd
 
-# URL da planilha
-sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789"
-oleo_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=J2:K12"
+# Título do app
+st.set_page_config(page_title="Situação do Estoque", layout="wide")
+st.title("Situação do Estoque por Lubrificante")
 
-# Lê a planilha principal
-colunas = ["DATA", "KARDEX", "Medida", "Galão", "Total", "SISTEMA"]
-data = pd.read_csv(sheet_url, header=None, names=colunas, skiprows=1, nrows=11)
+# Link da planilha e leitura
+sheet_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=A1:G12"
+data = pd.read_csv(sheet_url)
 
-# Converte Total e SISTEMA
+# Converte colunas numéricas (caso estejam como texto)
 data["Total"] = pd.to_numeric(data["Total"], errors="coerce", downcast="float")
-data["SISTEMA"] = pd.to_numeric(data["SISTEMA"].astype(str).str.replace(",", "."), errors="coerce")
+data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce", downcast="float")
 
-# Calcula a diferença
-data["Diferença"] = data["Total"] - data["SISTEMA"]
+# Lê os nomes dos óleos (faixa J2:K12)
+oleos_url = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789&range=J2:K12"
+oleos = pd.read_csv(oleos_url, header=None, names=["KARDEX", "OLEO"])
 
-# Lê os nomes dos óleos
-oleos = pd.read_csv(oleo_url, header=None, names=["KARDEX", "OLEO"])
+# Converte a coluna KARDEX para string para evitar erro no merge
+data["KARDEX"] = data["KARDEX"].astype(str)
+oleos["KARDEX"] = oleos["KARDEX"].astype(str)
 
-# Faz o merge
+# Merge
 resultado = pd.merge(data, oleos, on="KARDEX", how="left")
 
-# Seleciona as colunas finais
+# Calcula a diferença entre Total e SISTEMA
+resultado["Diferença"] = resultado["Total"] - resultado["SISTEMA"]
+
+# Seleciona as colunas finais que você quer mostrar
 tabela_final = resultado[["KARDEX", "OLEO", "Total", "SISTEMA", "Diferença"]]
 
 # Exibe no app
-st.title("Resumo de Estoque Atual")
-st.dataframe(tabela_final)
+st.dataframe(tabela_final, use_container_width=True)
