@@ -1,72 +1,46 @@
-import pandas as pd
 import streamlit as st
-import requests
-import io
-from datetime import datetime
+import pandas as pd
 import plotly.graph_objects as go
 
-# URL CSV Google Sheets
-url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
+# Exemplo de dados - substitua pelos seus dados reais
+data = [
+    {'KARDEX': '40300012', 'OLEO': 'OLEO (RETARDER) ATF DEXRON III (TAMBOR 200LTS)', 'TOTAL': 153, 'SISTEMA': 144},
+    {'KARDEX': '40300040', 'OLEO': 'ANTI CORROSIVO ORGANICO LARANJA...', 'TOTAL': 1000, 'SISTEMA': 1405},
+    {'KARDEX': '40300042', 'OLEO': 'OLEO LUBRIFICANTE MINERAL 15W40 MOTOR EURO 6', 'TOTAL': 713, 'SISTEMA': 716},
+]
 
-# Lê CSV online
-res = requests.get(url)
-data = pd.read_csv(io.StringIO(res.content.decode("utf-8")))
+# Função para criar o gráfico de barras e informações num card
+def create_card(kardex, oleo, total, sistema):
+    diferenca = total - sistema
+    acuracidade = (min(total, sistema) / max(total, sistema)) * 100 if max(total, sistema) != 0 else 100
 
-data["DATA"] = pd.to_datetime(data["DATA"], dayfirst=True, errors="coerce")
-data["TOTAL"] = pd.to_numeric(data["TOTAL"], errors="coerce")
-data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce")
+    # Cores e prefixo da diferença
+    if diferenca > 0:
+        cor_dif = 'green'
+        prefixo = '+'
+    elif diferenca < 0:
+        cor_dif = 'red'
+        prefixo = ''
+    else:
+        cor_dif = 'gray'
+        prefixo = ''
 
-# Pega a última data de cada Kardex
-ultimos = data.sort_values("DATA").groupby("KARDEX", as_index=False).last()
+    # Gráfico
+    fig = go.Figure(data=[
+        go.Bar(name='Físico', y=[''], x=[total], orientation='h', marker_color='royalblue', text=[f'{total}'], textposition='outside'),
+        go.Bar(name='Sistema', y=[''], x=[sistema], orientation='h', marker_color='orange', text=[f'{sistema}'], textposition='outside'),
+    ])
+    fig.update_layout(barmode='group', height=150, margin=dict(l=20, r=20, t=20, b=20), showlegend=False, xaxis=dict(showticklabels=False), yaxis=dict(showticklabels=False))
 
-# Calcula diferença
-ultimos["DIFERENCA"] = ultimos["TOTAL"] - ultimos["SISTEMA"]
-
-# Formata a data
-ultimos["DATA"] = ultimos["DATA"].dt.strftime("%d/%m/%Y")
-
-# Mostra a tabela no layout
-st.title("Relatório - Última Atualização por Lubrificante")
-def format_diff(x):
-    if pd.isna(x):
-        return "None"
-    color = "green" if x > 0 else "red" if x < 0 else "black"
-    arrow = "↑" if x > 0 else "↓" if x < 0 else "→"
-    return f"<span style='color:{color}'>{arrow} {abs(int(x))}</span>"
-
-tabela = ultimos[["DATA", "KARDEX", "LUBRIFICANTE", "TOTAL", "SISTEMA", "DIFERENCA"]].copy()
-tabela["TOTAL"] = tabela["TOTAL"].fillna("-").apply(lambda x: int(x) if isinstance(x, float) else x)
-tabela["SISTEMA"] = tabela["SISTEMA"].fillna("-").apply(lambda x: int(x) if isinstance(x, float) else x)
-tabela["DIFERENCA"] = tabela["DIFERENCA"].apply(format_diff)
-
-# Exibe tabela formatada
-st.write(tabela.to_html(escape=False, index=False), unsafe_allow_html=True)
-
-# Cards individuais
-st.subheader("Acuracidade por Lubrificante")
-
-for _, row in ultimos.iterrows():
-    fisico = row["TOTAL"]
-    sistema = row["SISTEMA"]
-
-    if pd.isna(fisico) or pd.isna(sistema):
-        continue
-
-    diferenca = fisico - sistema
-    acuracidade = 100 * min(fisico, sistema) / max(fisico, sistema) if max(fisico, sistema) != 0 else 0
-
-    st.markdown(f"#### {row['KARDEX']} - {row['LUBRIFICANTE']}")
-
-    fig = go.Figure()
-    fig.add_trace(go.Bar(x=["Físico"], y=[fisico], name="Físico", marker_color="blue", text=[int(fisico)], textposition="outside"))
-    fig.add_trace(go.Bar(x=["Sistema"], y=[sistema], name="Sistema", marker_color="orange", text=[int(sistema)], textposition="outside"))
-    fig.update_layout(barmode="group", height=250, margin=dict(t=20, b=20))
-
-    col1, col2 = st.columns(2)
-
-    with col1:
+    # Card visual
+    with st.container():
+        st.markdown(f'##### {kardex} - {oleo}')
         st.plotly_chart(fig, use_container_width=True)
+        st.write(f'<div style="font-size: 16px;">Diferença (L): <span style="color:{cor_dif};">{prefixo}{diferenca}</span></div>', unsafe_allow_html=True)
+        st.write(f'<div style="font-size: 16px;">% Acuracidade: <strong>{acuracidade:.1f}%</strong></div>', unsafe_allow_html=True)
 
-    with col2:
-        st.metric("Diferença (L)", f"{int(diferenca):+}", delta_color="inverse")
-        st.metric("% Acuracidade", f"{acuracidade:.1f}%")
+# LAYOUT EM COLUNAS
+cols = st.columns(len(data))
+for idx, item in enumerate(data):
+    with cols[idx]:
+        create_card(item['KARDEX'], item['OLEO'], item['TOTAL'], item['SISTEMA'])
