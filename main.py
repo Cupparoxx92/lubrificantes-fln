@@ -1,47 +1,72 @@
 import pandas as pd
 import streamlit as st
-from io import StringIO
 import requests
+import io
+from datetime import datetime
+import plotly.graph_objects as go
 
-# URL da planilha publicada como CSV
-sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
-data = pd.read_csv(sheet_url)
+# URL CSV Google Sheets
+url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
-data['DATA'] = pd.to_datetime(data['DATA'], errors='coerce', dayfirst=True)
-data['TOTAL'] = pd.to_numeric(data['TOTAL'], errors='coerce')
-data['SISTEMA'] = pd.to_numeric(data['SISTEMA'], errors='coerce')
+# Lê CSV online
+res = requests.get(url)
+data = pd.read_csv(io.StringIO(res.content.decode("utf-8")))
 
-# Obter a última data de cada lubrificante
-ultimos_registros = data.sort_values('DATA').groupby('LUBRIFICANTE', as_index=False).last()
-ultimos_registros['DIFERENCA'] = ultimos_registros['SISTEMA'] - ultimos_registros['TOTAL']
+data["DATA"] = pd.to_datetime(data["DATA"], dayfirst=True, errors="coerce")
+data["TOTAL"] = pd.to_numeric(data["TOTAL"], errors="coerce")
+data["SISTEMA"] = pd.to_numeric(data["SISTEMA"], errors="coerce")
 
-# Layout do dashboard
-st.set_page_config(page_title="Relatório - Última Atualização por Lubrificante", layout="wide")
+# Pega a última data de cada Kardex
+ultimos = data.sort_values("DATA").groupby("KARDEX", as_index=False).last()
+
+# Calcula diferença
+ultimos["DIFERENCA"] = ultimos["TOTAL"] - ultimos["SISTEMA"]
+
+# Formata a data
+ultimos["DATA"] = ultimos["DATA"].dt.strftime("%d/%m/%Y")
+
+# Mostra a tabela no layout
 st.title("Relatório - Última Atualização por Lubrificante")
+def format_diff(x):
+    if pd.isna(x):
+        return "None"
+    color = "green" if x > 0 else "red" if x < 0 else "black"
+    arrow = "↑" if x > 0 else "↓" if x < 0 else "→"
+    return f"<span style='color:{color}'>{arrow} {abs(int(x))}</span>"
 
-# Tabela principal
-st.dataframe(
-    ultimos_registros[['DATA', 'KARDEX', 'LUBRIFICANTE', 'TOTAL', 'SISTEMA', 'DIFERENCA']]
-    .style.format({'TOTAL': '{:.0f}', 'SISTEMA': '{:.0f}', 'DIFERENCA': '{:+.0f}'})
-    .apply(lambda x: [
-        "color: green" if v > 0 else "color: red" if v < 0 else "" for v in x
-    ] if x.name == 'DIFERENCA' else ["" for _ in x], axis=0),
-    hide_index=True,
-    use_container_width=True
-)
+tabela = ultimos[["DATA", "KARDEX", "LUBRIFICANTE", "TOTAL", "SISTEMA", "DIFERENCA"]].copy()
+tabela["TOTAL"] = tabela["TOTAL"].fillna("-").apply(lambda x: int(x) if isinstance(x, float) else x)
+tabela["SISTEMA"] = tabela["SISTEMA"].fillna("-").apply(lambda x: int(x) if isinstance(x, float) else x)
+tabela["DIFERENCA"] = tabela["DIFERENCA"].apply(format_diff)
+
+# Exibe tabela formatada
+st.write(tabela.to_html(escape=False, index=False), unsafe_allow_html=True)
 
 # Cards individuais
-st.subheader("Resumo por Lubrificante")
-for _, row in ultimos_registros.iterrows():
-    sobra_falta = row['DIFERENCA']
-    acuracidade = (min(row['TOTAL'], row['SISTEMA']) / max(row['TOTAL'], row['SISTEMA'])) * 100 if max(row['TOTAL'], row['SISTEMA']) > 0 else 100
+st.subheader("Acuracidade por Lubrificante")
 
-    with st.container():
-        st.markdown(f"### {row['KARDEX']} - {row['LUBRIFICANTE']}")
-        col1, col2 = st.columns([3, 3])
-        with col1:
-            st.metric("Físico", f"{int(row['TOTAL'])}" if pd.notnull(row['TOTAL']) else "-")
-            st.metric("Sistema", f"{int(row['SISTEMA'])}" if pd.notnull(row['SISTEMA']) else "-")
-        with col2:
-            st.metric("Diferença (L)", f"{sobra_falta:+.0f}", delta_color="inverse" if sobra_falta < 0 else "normal")
-            st.metric("% Acuracidade", f"{acuracidade:.1f}%")
+for _, row in ultimos.iterrows():
+    fisico = row["TOTAL"]
+    sistema = row["SISTEMA"]
+
+    if pd.isna(fisico) or pd.isna(sistema):
+        continue
+
+    diferenca = fisico - sistema
+    acuracidade = 100 * min(fisico, sistema) / max(fisico, sistema) if max(fisico, sistema) != 0 else 0
+
+    st.markdown(f"#### {row['KARDEX']} - {row['LUBRIFICANTE']}")
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(x=["Físico"], y=[fisico], name="Físico", marker_color="blue", text=[int(fisico)], textposition="outside"))
+    fig.add_trace(go.Bar(x=["Sistema"], y=[sistema], name="Sistema", marker_color="orange", text=[int(sistema)], textposition="outside"))
+    fig.update_layout(barmode="group", height=250, margin=dict(t=20, b=20))
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.plotly_chart(fig, use_container_width=True)
+
+    with col2:
+        st.metric("Diferença (L)", f"{int(diferenca):+}", delta_color="inverse")
+        st.metric("% Acuracidade", f"{acuracidade:.1f}%")
