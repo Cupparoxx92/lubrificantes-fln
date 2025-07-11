@@ -2,33 +2,38 @@ import streamlit as st
 import pandas as pd
 
 # Configuração da página
-st.set_page_config(page_title="Situação do Estoque por Lubrificante", layout="wide")
-st.title("Situação do Estoque por Lubrificante")
+st.set_page_config(page_title="Estoque Lubrificantes", layout="wide")
+st.title("🔍 Relatório Final por Óleo")
 
-# Base do link
-sheet_base = "https://docs.google.com/spreadsheets/d/1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI/export?format=csv&gid=879658789"
+# URL da planilha
+sheet_id = "1xbTqYab9lHWdYB-PD2Ma6d5B8YNZRUp7QK5JGT5trQI"
+gid = "0"
 
-# Leitura dos lubrificantes (J2:K12)
-oleo_url = sheet_base + "&range=J2:K12"
-oleo_df = pd.read_csv(oleo_url, header=None, names=["KARDEX", "OLEO"])
+# Leitura da planilha a partir da linha 903, com cabeçalho na primeira linha
+sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
 
-# Leitura do Total (E2:E12)
-total_url = sheet_base + "&range=E2:E12"
-total_df = pd.read_csv(total_url, header=None, names=["Total"])
+# Lê toda a planilha e depois filtra as linhas 
+full_data = pd.read_csv(sheet_url, skiprows=902)
 
-# Leitura do Sistema (F2:F12)
-sistema_url = sheet_base + "&range=F2:F12"
-sistema_df = pd.read_csv(sistema_url, header=None, names=["Sistema"])
+# Define os nomes das colunas corretamente (conforme sua planilha)
+full_data.columns = ["Data", "Kardex", "Medida", "Galão", "Total", "Sistema", "Lubrificante"]
 
-# Junta as informações
-dados = pd.concat([oleo_df, total_df, sistema_df], axis=1)
+# Converte a coluna de data e numéricas
+full_data["Data"] = pd.to_datetime(full_data["Data"], dayfirst=True, errors="coerce")
+full_data["Total"] = pd.to_numeric(full_data["Total"], errors="coerce").fillna(0)
+full_data["Sistema"] = pd.to_numeric(full_data["Sistema"], errors="coerce").fillna(0)
 
-# Conversão numérica
-dados["Total"] = pd.to_numeric(dados["Total"], errors="coerce")
-dados["Sistema"] = pd.to_numeric(dados["Sistema"], errors="coerce")
+# Remove linhas sem Kardex ou Data válidos
+full_data = full_data.dropna(subset=["Kardex", "Data"])
 
-# Calcula diferença
-dados["Diferença"] = dados["Total"] - dados["Sistema"]
+# Para cada Kardex, pega a última data
+ultima_data = full_data.sort_values("Data").groupby("Kardex").tail(1)
 
-# Exibe o resultado
-st.dataframe(dados)
+# Calcula a diferença (Sistema - Total)
+ultima_data["Diferença"] = ultima_data["Sistema"] - ultima_data["Total"]
+
+# Seleciona e ordena as colunas desejadas
+resultado_final = ultima_data[["Data", "Kardex", "Lubrificante", "Total", "Sistema", "Diferença"]]
+
+# Exibe o DataFrame final
+st.dataframe(resultado_final, use_container_width=True)
