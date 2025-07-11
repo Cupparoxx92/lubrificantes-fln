@@ -1,0 +1,36 @@
+
+<html>
+<head>
+<style>
+body { font-family: Arial; }
+table { border-collapse: collapse; width: 60%; float: left; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+th { background-color: #f2f2f2; }
+.card { width: 30%; float: right; margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+.bar-container { height: 20px; background-color: #ddd; margin-bottom: 5px; }
+.bar-fisico { background-color: blue; height: 100%; color: white; text-align: center; }
+.bar-sistema { background-color: orange; height: 100%; color: white; text-align: center; }
+</style>
+</head>
+<body>
+<h2>Relatório - Última Atualização por Lubrificante</h2>
+
+<table>
+<tr><th>KARDEX</th><th>LUBRIFICANTE</th><th>TOTAL</th><th>SISTEMA</th><th>DIFERENCA</th></tr>
+<tr><td>40300012</td><td>OLEO (RETARDER) ATF DEXRON III</td><td>150</td><td>130</td><td style='color:green'>20</td></tr><tr><td>40300040</td><td>ANTI CORROSIVO ORGANICO LARANJA</td><td>90</td><td>100</td><td style='color:red'>-10</td></tr></table>
+    <div class='card'>
+      <strong>40300012 - OLEO (RETARDER) ATF DEXRON III</strong><br><br>
+      <div class='bar-container'><div class='bar-fisico' style='width:100%'>150</div></div>
+      <div class='bar-container'><div class='bar-sistema' style='width:86%'>130</div></div>
+      Diferença: 20<br>
+      Acuracidade: 115.4%
+    </div>
+    
+    <div class='card'>
+      <strong>40300040 - ANTI CORROSIVO ORGANICO LARANJA</strong><br><br>
+      <div class='bar-container'><div class='bar-fisico' style='width:90%'>90</div></div>
+      <div class='bar-container'><div class='bar-sistema' style='width:100%'>100</div></div>
+      Diferença: -10<br>
+      Acuracidade: 90.0%
+    </div>
+    </body></html>
