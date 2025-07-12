@@ -10,9 +10,6 @@ table {{ border-collapse: collapse; width: 100%; font-size: 14px; }}
 th, td {{ border: 1px solid #ddd; padding: 8px; text-align: center; }}
 th {{ background-color: #e0e0e0; color: #333; }}
 
-.contabil-card {{ background-color: #cfe2f3; padding: 15px; border-radius: 8px; margin-bottom: 20px; width: 400px; }}
-.contabil-card h3 {{ text-align: center; }}
-
 .card {{ width: 100%; margin-bottom: 12px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: white; font-size: 13px; }}
 .bar-container {{ height: 16px; background-color: #ddd; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }}
 .bar-fisico {{ background-color: blue; height: 100%; color: white; text-align: center; font-size: 11px; }}
@@ -22,15 +19,15 @@ th {{ background-color: #e0e0e0; color: #333; }}
 <body>
 
 
-<div class="contabil-card">
-<h3>ACURACIDADE CONTÁBIL</h3>
-VALOR FÍSICO: R$ 135,622.80<br>
-VALOR SISTEMA: R$ 135,133.00<br>
-DIFERENÇA CONTÁBIL: R$ 489.81<br>
-(+)Sobras: R$ 1,548.63<br>
-(-)Faltas: R$ -1,058.81<br>
-ACURACIDADE CONTÁBIL: 99.64%
-</div>
+<table style="width: 400px; background-color: #cfe2f3; border-collapse: collapse; margin-bottom: 20px;">
+    <tr><th colspan="2" style="padding: 8px; border: 1px solid #ddd;">ACURACIDADE CONTÁBIL</th></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">VALOR FÍSICO</td><td style="padding: 6px; border: 1px solid #ddd;">R$ 135,622.80</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">VALOR SISTEMA</td><td style="padding: 6px; border: 1px solid #ddd;">R$ 135,133.00</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">DIFERENÇA CONTÁBIL</td><td style="padding: 6px; border: 1px solid #ddd;">R$ 489.81</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">(+)Sobras</td><td style="padding: 6px; border: 1px solid #ddd;">R$ 1,548.63</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">(-)Faltas</td><td style="padding: 6px; border: 1px solid #ddd;">R$ -1,058.81</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">ACURACIDADE CONTÁBIL</td><td style="padding: 6px; border: 1px solid #ddd;">99.64%</td></tr>
+</table>
 
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
