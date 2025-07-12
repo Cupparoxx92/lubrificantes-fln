@@ -5,42 +5,44 @@
 <meta charset="UTF-8">
 <title>Relatório de Acuracidade</title>
 <style>
-body { font-family: Arial; margin: 20px; background-color: #f9f9f9; }
-table { border-collapse: collapse; width: 100%; font-size: 14px; }
-th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-th { background-color: #e0e0e0; color: #333; }
+body {{ font-family: Arial; margin: 20px; background-color: #f9f9f9; }}
+table {{ border-collapse: collapse; width: 100%; font-size: 14px; }}
+th, td {{ border: 1px solid #ddd; padding: 8px; text-align: center; }}
+th {{ background-color: #e0e0e0; color: #333; }}
 
-.card { width: 100%; margin-bottom: 12px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: white; font-size: 13px; }
+.contabil-card {{ background-color: #cfe2f3; padding: 15px; border-radius: 8px; margin-bottom: 20px; width: 400px; }}
+.contabil-card h3 {{ text-align: center; }}
 
-.bar-container { height: 16px; background-color: #ddd; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }
-.bar-fisico { background-color: blue; height: 100%; color: white; text-align: center; font-size: 11px; }
-.bar-sistema { background-color: orange; height: 100%; color: white; text-align: center; font-size: 11px; }
+.card {{ width: 100%; margin-bottom: 12px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: white; font-size: 13px; }}
+.bar-container {{ height: 16px; background-color: #ddd; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }}
+.bar-fisico {{ background-color: blue; height: 100%; color: white; text-align: center; font-size: 11px; }}
+.bar-sistema {{ background-color: orange; height: 100%; color: white; text-align: center; font-size: 11px; }}
 </style>
 </head>
 <body>
 
-<h2 style="text-align: center;">Relatório - Última Atualização por Lubrificante</h2>
+
+<div class="contabil-card">
+<h3>ACURACIDADE CONTÁBIL</h3>
+VALOR FÍSICO: R$ 135,622.80<br>
+VALOR SISTEMA: R$ 135,133.00<br>
+DIFERENÇA CONTÁBIL: R$ 489.81<br>
+(+)Sobras: R$ 1,548.63<br>
+(-)Faltas: R$ -1,058.81<br>
+ACURACIDADE CONTÁBIL: 99.64%
+</div>
+
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+<div style="width: 60%; padding-right: 20px;">
+<table>
+<tr><th>DATA</th><th>KARDEX</th><th>LUBRIFICANTE</th><th>TOTAL</th><th>SISTEMA</th><th>DIFERENÇA</th></tr>
+<tr><td>11/07/2025</td><td>40300012</td><td>OLEO (RETARDER) ATF DEXRON III (TAMBOR 200LTS)</td><td>144</td><td>144</td><td style='color:black'>0</td></tr><tr><td>11/07/2025</td><td>40300023</td><td>OLEO LUBRIFICANTE SINTETICO SAE 10W40 API CI 4 SHELL IBC 1000 L</td><td>1555</td><td>1593</td><td style='color:red'>-38</td></tr><tr><td>11/07/2025</td><td>40300024</td><td>ANTI CORROSIVO ORGANICO LARANJA DILUIDO MONOETILENOGLICOL TAMBOR 200 LITROS</td><td>452</td><td>438</td><td style='color:green'>14</td></tr><tr><td>11/07/2025</td><td>40300040</td><td>ANTI CORROSIVO ORGANICO LARANJA CONCENTRADO MONOETILENOGLICOL TAMBOR 200 LITROS</td><td>907</td><td>894</td><td style='color:green'>13</td></tr><tr><td>11/07/2025</td><td>40300042</td><td>OLEO LUBRIFICANTE MINERAL 15W40 MOTOR EURO 6</td><td>713</td><td>716</td><td style='color:red'>-3</td></tr><tr><td>11/07/2025</td><td>40300043</td><td>OLEO LUBRIFICANTE DIFERENCIAL S3 AD 80W-90 HIPOIDE SHELL SPIRAX</td><td>853</td><td>866</td><td style='color:red'>-13</td></tr><tr><td>11/07/2025</td><td>40300044</td><td>OLEO LUBRIFICANTE TRANSMISSAO SHELL SPIRAX S2 GD</td><td>418</td><td>418</td><td style='color:black'>0</td></tr><tr><td>11/07/2025</td><td>40300045</td><td>OLEO LUBRIFICANTE MOTOR SINTETICO SAE 5W30 TAMBOR 209L</td><td>979</td><td>976</td><td style='color:green'>3</td></tr><tr><td>11/07/2025</td><td>40300051</td><td>GLICOL ANTICONGELANTE SCANIA 2292029 TAMBOR 208L</td><td>179</td><td>160</td><td style='color:green'>19</td></tr><tr><td>11/07/2025</td><td>40309451</td><td>OLEO LUB MINERAL TRM 5 SAE 85W140 DIFERENCIAL TAMBOR 200LTS</td><td>603</td><td>566</td><td style='color:green'>37</td></tr><tr><td>11/07/2025</td><td>40309453</td><td>OLEO TRANSMISSAO SAE 40 VOLVO (TAMBOR 200LTS)</td><td>510</td><td>500</td><td style='color:green'>10</td></tr>
+</table>
+</div>
 
-    <!-- Tabela -->
-    <div style="width: 60%; padding-right: 20px;">
-        <table>
-        <tr>
-            <th>DATA</th>
-            <th>KARDEX</th>
-            <th>LUBRIFICANTE</th>
-            <th>TOTAL</th>
-            <th>SISTEMA</th>
-            <th>DIFERENÇA</th>
-        </tr>
-        <tr><td>11/07/2025</td><td>40300012</td><td>OLEO (RETARDER) ATF DEXRON III (TAMBOR 200LTS)</td><td>144</td><td>144</td><td style='color:black'>0</td></tr><tr><td>11/07/2025</td><td>40300023</td><td>OLEO LUBRIFICANTE SINTETICO SAE 10W40 API CI 4 SHELL IBC 1000 L</td><td>1555</td><td>1593</td><td style='color:red'>-38</td></tr><tr><td>11/07/2025</td><td>40300024</td><td>ANTI CORROSIVO ORGANICO LARANJA DILUIDO MONOETILENOGLICOL TAMBOR 200 LITROS</td><td>452</td><td>438</td><td style='color:green'>14</td></tr><tr><td>11/07/2025</td><td>40300040</td><td>ANTI CORROSIVO ORGANICO LARANJA CONCENTRADO MONOETILENOGLICOL TAMBOR 200 LITROS</td><td>907</td><td>894</td><td style='color:green'>13</td></tr><tr><td>11/07/2025</td><td>40300042</td><td>OLEO LUBRIFICANTE MINERAL 15W40 MOTOR EURO 6</td><td>713</td><td>716</td><td style='color:red'>-3</td></tr><tr><td>11/07/2025</td><td>40300043</td><td>OLEO LUBRIFICANTE DIFERENCIAL S3 AD 80W-90 HIPOIDE SHELL SPIRAX</td><td>853</td><td>866</td><td style='color:red'>-13</td></tr><tr><td>11/07/2025</td><td>40300044</td><td>OLEO LUBRIFICANTE TRANSMISSAO SHELL SPIRAX S2 GD</td><td>418</td><td>418</td><td style='color:black'>0</td></tr><tr><td>11/07/2025</td><td>40300045</td><td>OLEO LUBRIFICANTE MOTOR SINTETICO SAE 5W30 TAMBOR 209L</td><td>979</td><td>976</td><td style='color:green'>3</td></tr><tr><td>11/07/2025</td><td>40300051</td><td>GLICOL ANTICONGELANTE SCANIA 2292029 TAMBOR 208L</td><td>179</td><td>160</td><td style='color:green'>19</td></tr><tr><td>11/07/2025</td><td>40309451</td><td>OLEO LUB MINERAL TRM 5 SAE 85W140 DIFERENCIAL TAMBOR 200LTS</td><td>603</td><td>566</td><td style='color:green'>37</td></tr><tr><td>11/07/2025</td><td>40309453</td><td>OLEO TRANSMISSAO SAE 40 VOLVO (TAMBOR 200LTS)</td><td>510</td><td>500</td><td style='color:green'>10</td></tr>
-        </table>
-    </div>
+<div style="width: 35%;">
 
-    <!-- Cards -->
-    <div style="width: 35%;">
-        
     <div class='card'>
         <strong>40300012 - OLEO (RETARDER) ATF DEXRON III (TAMBOR 200LTS)</strong><br>
         <div class='bar-container'>
@@ -50,7 +52,7 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:100%'>144 L (Sistema)</div>
         </div>
         <div>
-            Diferença: <strong style='color:black'>0</strong> |
+            Diferença: <strong style='color:green'>0</strong> |
             Acuracidade: 100.0%
         </div>
     </div>
@@ -64,7 +66,7 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:100%'>1593 L (Sistema)</div>
         </div>
         <div>
-            Diferença: <strong style='color:red'>-38</strong> |
+            Diferença: <strong style='color:green'>-38</strong> |
             Acuracidade: 98.0%
         </div>
     </div>
@@ -106,7 +108,7 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:100%'>716 L (Sistema)</div>
         </div>
         <div>
-            Diferença: <strong style='color:red'>-3</strong> |
+            Diferença: <strong style='color:green'>-3</strong> |
             Acuracidade: 100.0%
         </div>
     </div>
@@ -120,7 +122,7 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:100%'>866 L (Sistema)</div>
         </div>
         <div>
-            Diferença: <strong style='color:red'>-13</strong> |
+            Diferença: <strong style='color:green'>-13</strong> |
             Acuracidade: 98.0%
         </div>
     </div>
@@ -134,7 +136,7 @@ th { background-color: #e0e0e0; color: #333; }
             <div class='bar-sistema' style='width:100%'>418 L (Sistema)</div>
         </div>
         <div>
-            Diferença: <strong style='color:black'>0</strong> |
+            Diferença: <strong style='color:green'>0</strong> |
             Acuracidade: 100.0%
         </div>
     </div>
@@ -195,9 +197,7 @@ th { background-color: #e0e0e0; color: #333; }
         </div>
     </div>
     
-    </div>
-
 </div>
-
+</div>
 </body>
 </html>

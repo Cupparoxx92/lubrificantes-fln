@@ -13,10 +13,8 @@ def clean_money(value):
 valor_fisico = contabil[2].apply(clean_money).sum()
 valor_sistema = contabil[3].apply(clean_money).sum()
 diferenca_contabil = contabil[5].apply(clean_money).sum()
-
 sobras = contabil[6].dropna().apply(lambda x: clean_money(x) if "Sobra" not in str(x) and "-" not in str(x) else 0).sum()
 faltas = contabil[6].dropna().apply(lambda x: clean_money(x) if "-" in str(x) else 0).sum()
-
 acuracidade_contabil = round((min(valor_fisico, valor_sistema) / max(valor_fisico, valor_sistema)) * 100, 2) if max(valor_fisico, valor_sistema) else 0
 
 # ----------- Leitura da aba LUBRIFICANTES -----------
@@ -24,34 +22,30 @@ sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iB
 df = pd.read_csv(sheet_url, header=None)
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
-
 df = df.dropna(subset=["KARDEX", "TOTAL", "SISTEMA"])
 df = df[df["KARDEX"].apply(lambda x: str(x).isdigit())]
-
 df["TOTAL"] = pd.to_numeric(df["TOTAL"], errors="coerce").fillna(0).astype(int)
 df["SISTEMA"] = pd.to_numeric(df["SISTEMA"], errors="coerce").fillna(0).astype(int)
 df["DATA"] = pd.to_datetime(df["DATA"], dayfirst=True, errors="coerce")
-
 ultimos = df.sort_values("DATA").groupby("KARDEX", as_index=False).last()
 ultimos["DIFERENCA"] = ultimos["TOTAL"] - ultimos["SISTEMA"]
-
 ultimos["ACURACIDADE"] = (
     (ultimos[["TOTAL", "SISTEMA"]].min(axis=1) / ultimos[["TOTAL", "SISTEMA"]].max(axis=1))
     .fillna(0)
     .round(2) * 100
 ).astype(str) + "%"
 
-# ----------- Monta o card contábil -----------
+# ----------- Monta o resumo contábil como TABELA -----------
 card_contabil = """
-<div class="contabil-card">
-<h3>ACURACIDADE CONTÁBIL</h3>
-VALOR FÍSICO: R$ {valor_fisico:,.2f}<br>
-VALOR SISTEMA: R$ {valor_sistema:,.2f}<br>
-DIFERENÇA CONTÁBIL: R$ {diferenca_contabil:,.2f}<br>
-(+)Sobras: R$ {sobras:,.2f}<br>
-(-)Faltas: R$ {faltas:,.2f}<br>
-ACURACIDADE CONTÁBIL: {acuracidade_contabil:.2f}%
-</div>
+<table style="width: 400px; background-color: #cfe2f3; border-collapse: collapse; margin-bottom: 20px;">
+    <tr><th colspan="2" style="padding: 8px; border: 1px solid #ddd;">ACURACIDADE CONTÁBIL</th></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">VALOR FÍSICO</td><td style="padding: 6px; border: 1px solid #ddd;">R$ {valor_fisico:,.2f}</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">VALOR SISTEMA</td><td style="padding: 6px; border: 1px solid #ddd;">R$ {valor_sistema:,.2f}</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">DIFERENÇA CONTÁBIL</td><td style="padding: 6px; border: 1px solid #ddd;">R$ {diferenca_contabil:,.2f}</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">(+)Sobras</td><td style="padding: 6px; border: 1px solid #ddd;">R$ {sobras:,.2f}</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">(-)Faltas</td><td style="padding: 6px; border: 1px solid #ddd;">R$ {faltas:,.2f}</td></tr>
+    <tr><td style="padding: 6px; border: 1px solid #ddd;">ACURACIDADE CONTÁBIL</td><td style="padding: 6px; border: 1px solid #ddd;">{acuracidade_contabil:.2f}%</td></tr>
+</table>
 """.format(
     valor_fisico=valor_fisico,
     valor_sistema=valor_sistema,
@@ -73,9 +67,6 @@ body {{ font-family: Arial; margin: 20px; background-color: #f9f9f9; }}
 table {{ border-collapse: collapse; width: 100%; font-size: 14px; }}
 th, td {{ border: 1px solid #ddd; padding: 8px; text-align: center; }}
 th {{ background-color: #e0e0e0; color: #333; }}
-
-.contabil-card {{ background-color: #cfe2f3; padding: 15px; border-radius: 8px; margin-bottom: 20px; width: 400px; }}
-.contabil-card h3 {{ text-align: center; }}
 
 .card {{ width: 100%; margin-bottom: 12px; border: 1px solid #ddd; padding: 10px; border-radius: 8px; background-color: white; font-size: 13px; }}
 .bar-container {{ height: 16px; background-color: #ddd; margin-bottom: 6px; border-radius: 4px; overflow: hidden; }}
@@ -103,14 +94,14 @@ th {{ background-color: #e0e0e0; color: #333; }}
 </html>
 """.replace("{CARD_CONTABIL}", card_contabil)
 
-# ----------- Tabela de lubrificantes -----------
+# ----------- Monta a tabela de lubrificantes -----------
 tabela_html = ""
 for _, row in ultimos.iterrows():
     cor = 'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'
     data_str = row['DATA'].strftime('%d/%m/%Y') if pd.notnull(row['DATA']) else '-'
     tabela_html += f"<tr><td>{data_str}</td><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td></tr>"
 
-# ----------- Cards laterais -----------
+# ----------- Monta os cards laterais -----------
 cards_html = ""
 for _, row in ultimos.iterrows():
     max_value = max(row["TOTAL"], row["SISTEMA"]) if max(row["TOTAL"], row["SISTEMA"]) != 0 else 1
@@ -133,10 +124,9 @@ for _, row in ultimos.iterrows():
     </div>
     """
 
-# ----------- Substitui no HTML -----------
+# ----------- Substitui no HTML e salva -----------
 html = html.replace("{%TABELA_ROWS%}", tabela_html).replace("{%CARDS%}", cards_html)
 
-# ----------- Salva no arquivo -----------
 with open("relatorio.html", "w", encoding="utf-8") as f:
     f.write(html)
 
