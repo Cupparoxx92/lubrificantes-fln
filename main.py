@@ -70,22 +70,11 @@ def gerar_html(tabela, grafico, cards):
     """
 
 def main():
-    contabil = pd.DataFrame({
-        "Kardex": [40300023, 40300012, 40309451],
-        "litros_diferenca": [-38, 0, 37],
-        "R$ fisico": [32266.25, 2300.44, 8740.32],
-        "R$ sistema": [33045.21, 2299.24, 8198.46],
-        "Divergencia %": [-2.36, 0.05, 6.61],
-        "R$": [-778.96, 1.20, 541.85],
-        "Faltas": [-1058.81, 0, 1548.63]
-    })
+    url_contabil = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=879658789&single=true&output=csv"
+    url_lubrificantes = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
-    lubrificantes = pd.DataFrame({
-        "KARDEX": [40300023, 40300012, 40309451],
-        "LUBRIFICANTE": ["Óleo Motor", "Óleo Transmissão", "Óleo Hidráulico"],
-        "TOTAL": [150, 90, 75],
-        "SISTEMA": [130, 100, 80]
-    })
+    contabil = pd.read_csv(url_contabil)
+    lubrificantes = pd.read_csv(url_lubrificantes)
 
     valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil = calcular_totais(contabil)
 
