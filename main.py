@@ -1,10 +1,8 @@
 import pandas as pd
 
-# ----------- Leitura da aba ACURACIDADE CONTÁBIL (gid=879658789) -----------
+# ----------- Leitura da aba ACURACIDADE CONTÁBIL -----------
 contabil_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=879658789&single=true&output=csv"
 contabil = pd.read_csv(contabil_url, header=None, skiprows=13)
-
-# Remove linhas vazias
 contabil = contabil.dropna(subset=[0])
 
 def clean_money(value):
@@ -21,10 +19,9 @@ faltas = contabil[6].dropna().apply(lambda x: clean_money(x) if "-" in str(x) el
 
 acuracidade_contabil = round((min(valor_fisico, valor_sistema) / max(valor_fisico, valor_sistema)) * 100, 2) if max(valor_fisico, valor_sistema) else 0
 
-# ----------- Leitura da aba LUBRIFICANTES (gid=0) -----------
+# ----------- Leitura da aba LUBRIFICANTES -----------
 sheet_url = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 df = pd.read_csv(sheet_url, header=None)
-
 df = df[[0, 1, 4, 5, 6]]
 df.columns = ["DATA", "KARDEX", "TOTAL", "SISTEMA", "LUBRIFICANTE"]
 
@@ -44,8 +41,27 @@ ultimos["ACURACIDADE"] = (
     .round(2) * 100
 ).astype(str) + "%"
 
-# ----------- Monta o HTML -----------
+# ----------- Monta o card contábil -----------
+card_contabil = """
+<div class="contabil-card">
+<h3>ACURACIDADE CONTÁBIL</h3>
+VALOR FÍSICO: R$ {valor_fisico:,.2f}<br>
+VALOR SISTEMA: R$ {valor_sistema:,.2f}<br>
+DIFERENÇA CONTÁBIL: R$ {diferenca_contabil:,.2f}<br>
+(+)Sobras: R$ {sobras:,.2f}<br>
+(-)Faltas: R$ {faltas:,.2f}<br>
+ACURACIDADE CONTÁBIL: {acuracidade_contabil:.2f}%
+</div>
+""".format(
+    valor_fisico=valor_fisico,
+    valor_sistema=valor_sistema,
+    diferenca_contabil=diferenca_contabil,
+    sobras=sobras,
+    faltas=faltas,
+    acuracidade_contabil=acuracidade_contabil,
+)
 
+# ----------- Monta o HTML geral -----------
 html = """
 <!DOCTYPE html>
 <html lang="pt-br">
@@ -69,16 +85,7 @@ th {{ background-color: #e0e0e0; color: #333; }}
 </head>
 <body>
 
-<!-- Card Azul -->
-<div class="contabil-card">
-<h3>ACURACIDADE CONTÁBIL</h3>
-VALOR FÍSICO: R$ {valor_fisico:,.2f}<br>
-VALOR SISTEMA: R$ {valor_sistema:,.2f}<br>
-DIFERENÇA CONTÁBIL: R$ {diferenca_contabil:,.2f}<br>
-(+)Sobras: R$ {sobras:,.2f}<br>
-(-)Faltas: R$ {faltas:,.2f}<br>
-ACURACIDADE CONTÁBIL: {acuracidade_contabil:.2f}%
-</div>
+{CARD_CONTABIL}
 
 <div style="display: flex; justify-content: space-between; align-items: flex-start;">
 <div style="width: 60%; padding-right: 20px;">
@@ -94,23 +101,16 @@ ACURACIDADE CONTÁBIL: {acuracidade_contabil:.2f}%
 </div>
 </body>
 </html>
-""".format(
-    valor_fisico=valor_fisico,
-    valor_sistema=valor_sistema,
-    diferenca_contabil=diferenca_contabil,
-    sobras=sobras,
-    faltas=faltas,
-    acuracidade_contabil=acuracidade_contabil,
-)
+""".replace("{CARD_CONTABIL}", card_contabil)
 
-# Tabela
+# ----------- Tabela de lubrificantes -----------
 tabela_html = ""
 for _, row in ultimos.iterrows():
     cor = 'green' if row['DIFERENCA'] > 0 else 'red' if row['DIFERENCA'] < 0 else 'black'
     data_str = row['DATA'].strftime('%d/%m/%Y') if pd.notnull(row['DATA']) else '-'
     tabela_html += f"<tr><td>{data_str}</td><td>{row['KARDEX']}</td><td>{row['LUBRIFICANTE']}</td><td>{row['TOTAL']}</td><td>{row['SISTEMA']}</td><td style='color:{cor}'>{row['DIFERENCA']}</td></tr>"
 
-# Cards laterais
+# ----------- Cards laterais -----------
 cards_html = ""
 for _, row in ultimos.iterrows():
     max_value = max(row["TOTAL"], row["SISTEMA"]) if max(row["TOTAL"], row["SISTEMA"]) != 0 else 1
@@ -133,10 +133,10 @@ for _, row in ultimos.iterrows():
     </div>
     """
 
-# Substitui no HTML
+# ----------- Substitui no HTML -----------
 html = html.replace("{%TABELA_ROWS%}", tabela_html).replace("{%CARDS%}", cards_html)
 
-# Salva
+# ----------- Salva no arquivo -----------
 with open("relatorio.html", "w", encoding="utf-8") as f:
     f.write(html)
 
