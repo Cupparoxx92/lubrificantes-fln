@@ -1,4 +1,5 @@
 import pandas as pd
+import math
 
 # Dados de exemplo (substitua pela leitura do seu Google Sheets)
 valor_fisico = 135622
@@ -14,6 +15,11 @@ cor = "#00BFFF" if acuracidade_contabil >= meta else "#FF4C4C"
 
 # Calcula o percentual do arco (limitado a 100)
 percentual_arc = min(acuracidade_contabil, 100)
+
+# Calcula coordenadas finais do arco
+end_x = 150 + 100 * math.cos(math.radians(180 - percentual_arc * 1.8))
+end_y = 150 - 100 * math.sin(math.radians(percentual_arc * 1.8))
+large_arc_flag = 1 if percentual_arc > 50 else 0
 
 # Monta o HTML com gráfico preenchido semelhante ao exemplo
 html = f"""
@@ -32,7 +38,7 @@ html = f"""
   <!-- Gráfico preenchido -->
   <svg width="300" height="160">
       <circle cx="150" cy="150" r="100" fill="none" stroke="#ddd" stroke-width="20" />
-      <path d="M 50 150 A 100 100 0 {1 if percentual_arc > 50 else 0} 1 {250 if percentual_arc >= 100 else 150 + 100 * cos({(1 - percentual_arc / 100) * 3.14})} {150 - 100 * sin({(percentual_arc / 100) * 3.14})}" fill="none" stroke="{cor}" stroke-width="20" />
+      <path d="M 50 150 A 100 100 0 {large_arc_flag} 1 {end_x:.2f} {end_y:.2f}" fill="none" stroke="{cor}" stroke-width="20" />
       <text x="150" y="90" text-anchor="middle" font-size="28" font-weight="bold" fill="{cor}">{acuracidade_contabil:.2f}%</text>
       <text x="150" y="115" text-anchor="middle" font-size="14" fill="#000">R$ {diferenca_contabil:,.2f}</text>
       <text x="150" y="140" text-anchor="middle" font-size="12" fill="#555">Meta: 99,98%</text>
