@@ -1,12 +1,23 @@
 import pandas as pd
 import math
+import unicodedata
+
+def normalizar_colunas(df):
+    # Remove acentos, espaços extras e coloca tudo minúsculo
+    def normalize(col):
+        col = col.strip().lower()
+        col = unicodedata.normalize('NFKD', col).encode('ASCII', 'ignore').decode('ASCII')
+        return col
+    df.columns = [normalize(col) for col in df.columns]
+    return df
 
 def calcular_totais(contabil):
-    valor_fisico = contabil["R$ fisico"].sum()
-    valor_sistema = contabil["R$ sistema"].sum()
+    # Atenção aos nomes padronizados das colunas
+    valor_fisico = contabil["r fisico"].sum()
+    valor_sistema = contabil["r sistema"].sum()
     diferenca_contabil = abs(valor_fisico - valor_sistema)
-    sobras = contabil["Faltas"].apply(lambda x: x if x > 0 else 0).sum()
-    faltas = contabil["Faltas"].apply(lambda x: x if x < 0 else 0).sum()
+    sobras = contabil["faltas"].apply(lambda x: x if x > 0 else 0).sum()
+    faltas = contabil["faltas"].apply(lambda x: x if x < 0 else 0).sum()
     acuracidade_contabil = round((min(valor_fisico, valor_sistema) / max(valor_fisico, valor_sistema)) * 100, 2)
     return valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil
 
@@ -43,15 +54,14 @@ def gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas
 def gerar_cards(lubrificantes):
     cards_html = ""
     for _, row in lubrificantes.iterrows():
-        fisico = row["TOTAL"]
-        sistema = row["SISTEMA"]
+        fisico = row["total"]
+        sistema = row["sistema"]
         diferenca = fisico - sistema
         max_value = max(fisico, sistema, 1)
         acuracidade = round((min(fisico, sistema) / max_value) * 100, 2)
-
         cards_html += f"""
-        <div style='border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 12px;'>
-            <strong>{row['KARDEX']} - {row['LUBRIFICANTE']}</strong><br>
+        <div style='border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 12px; min-width:330px; max-width:370px; display:inline-block; margin-right:12px;'>
+            <strong>{row['kardex']} - {row['lubrificante']}</strong><br>
             Físico: {fisico} | Sistema: {sistema}<br>
             Diferença: {diferenca} | Acuracidade: {acuracidade}%
         </div>
@@ -70,14 +80,21 @@ def gerar_html(tabela, grafico, cards):
     """
 
 def main():
+    # URLs das abas
     url_contabil = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=879658789&single=true&output=csv"
     url_lubrificantes = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyYi-89V_kh3Ts43iBWAfi8D7vylA6BsiQwlmG0xZqnoUcPKaPGbL6e3Qrie0SoqVZP64nRRQu71Z2/pub?gid=0&single=true&output=csv"
 
     contabil = pd.read_csv(url_contabil)
     lubrificantes = pd.read_csv(url_lubrificantes)
 
-    valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil = calcular_totais(contabil)
+    contabil = normalizar_colunas(contabil)
+    lubrificantes = normalizar_colunas(lubrificantes)
 
+    # Exemplo para debug se necessário:
+    # print(contabil.columns)
+    # print(lubrificantes.columns)
+
+    valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil = calcular_totais(contabil)
     tabela = gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas)
     grafico = gerar_grafico(acuracidade_contabil, diferenca_contabil)
     cards = gerar_cards(lubrificantes)
