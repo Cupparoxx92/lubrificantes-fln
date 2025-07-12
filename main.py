@@ -40,11 +40,32 @@ def gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas
     </table>
     """
 
-def gerar_html(tabela, grafico):
+def gerar_cards(lubrificantes):
+    cards_html = ""
+    for _, row in lubrificantes.iterrows():
+        fisico = row["TOTAL"]
+        sistema = row["SISTEMA"]
+        diferenca = fisico - sistema
+        max_value = max(fisico, sistema, 1)
+        acuracidade = round((min(fisico, sistema) / max_value) * 100, 2)
+
+        cards_html += f"""
+        <div style='border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 12px;'>
+            <strong>{row['KARDEX']} - {row['LUBRIFICANTE']}</strong><br>
+            Físico: {fisico} | Sistema: {sistema}<br>
+            Diferença: {diferenca} | Acuracidade: {acuracidade}%
+        </div>
+        """
+    return cards_html
+
+def gerar_html(tabela, grafico, cards):
     return f"""
     <div style="display: flex; justify-content: flex-start; align-items: center; gap: 80px; margin-bottom: 20px;">
         {tabela}
         {grafico}
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+        {cards}
     </div>
     """
 
@@ -59,10 +80,20 @@ def main():
         "Faltas": [-1058.81, 0, 1548.63]
     })
 
+    lubrificantes = pd.DataFrame({
+        "KARDEX": [40300023, 40300012, 40309451],
+        "LUBRIFICANTE": ["Óleo Motor", "Óleo Transmissão", "Óleo Hidráulico"],
+        "TOTAL": [150, 90, 75],
+        "SISTEMA": [130, 100, 80]
+    })
+
     valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil = calcular_totais(contabil)
+
     tabela = gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas)
     grafico = gerar_grafico(acuracidade_contabil, diferenca_contabil)
-    html = gerar_html(tabela, grafico)
+    cards = gerar_cards(lubrificantes)
+
+    html = gerar_html(tabela, grafico, cards)
 
     with open("relatorio.html", "w", encoding="utf-8") as f:
         f.write(html)
