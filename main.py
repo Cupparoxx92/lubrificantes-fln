@@ -15,9 +15,9 @@ cor = "blue" if acuracidade_contabil >= meta else "red"
 # Calcula o percentual do arco (limitado a 100)
 percentual_arc = min(acuracidade_contabil, 100)
 
-# Monta o HTML com SVG
+# Monta o HTML com espaço ajustado e meta no gráfico
 html = f"""
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+<div style="display: flex; justify-content: flex-start; align-items: center; gap: 80px; margin-bottom: 20px;">
 
   <!-- Tabela de resumo contábil -->
   <table style="width: 400px; background-color: #cfe2f3; border-collapse: collapse;">
@@ -41,6 +41,7 @@ html = f"""
             transform="rotate(-180 100 100)" />
       <text x="100" y="65" text-anchor="middle" font-size="20" font-weight="bold">{acuracidade_contabil:.2f}%</text>
       <text x="100" y="90" text-anchor="middle" font-size="12" font-weight="bold">R$ {diferenca_contabil:,.2f}</text>
+      <text x="100" y="115" text-anchor="middle" font-size="10" fill="#555">Meta: 99,98%</text>
   </svg>
 
 </div>
