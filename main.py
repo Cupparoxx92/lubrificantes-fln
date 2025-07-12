@@ -3,7 +3,6 @@ import math
 import unicodedata
 
 def normalizar_colunas(df):
-    # Remove acentos, espaços extras e coloca tudo minúsculo
     def normalize(col):
         col = col.strip().lower()
         col = unicodedata.normalize('NFKD', col).encode('ASCII', 'ignore').decode('ASCII')
@@ -11,13 +10,22 @@ def normalizar_colunas(df):
     df.columns = [normalize(col) for col in df.columns]
     return df
 
+def encontrar_coluna(df, busca):
+    for col in df.columns:
+        if busca in col:
+            return col
+    raise Exception(f"Coluna contendo '{busca}' não encontrada!")
+
 def calcular_totais(contabil):
-    # Atenção aos nomes padronizados das colunas
-    valor_fisico = contabil["r fisico"].sum()
-    valor_sistema = contabil["r sistema"].sum()
+    col_fisico = encontrar_coluna(contabil, "fisic")
+    col_sistema = encontrar_coluna(contabil, "sistem")
+    col_faltas = encontrar_coluna(contabil, "falta")
+
+    valor_fisico = contabil[col_fisico].sum()
+    valor_sistema = contabil[col_sistema].sum()
     diferenca_contabil = abs(valor_fisico - valor_sistema)
-    sobras = contabil["faltas"].apply(lambda x: x if x > 0 else 0).sum()
-    faltas = contabil["faltas"].apply(lambda x: x if x < 0 else 0).sum()
+    sobras = contabil[col_faltas].apply(lambda x: x if x > 0 else 0).sum()
+    faltas = contabil[col_faltas].apply(lambda x: x if x < 0 else 0).sum()
     acuracidade_contabil = round((min(valor_fisico, valor_sistema) / max(valor_fisico, valor_sistema)) * 100, 2)
     return valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil
 
@@ -52,16 +60,22 @@ def gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas
     """
 
 def gerar_cards(lubrificantes):
+    # Mesma lógica para nomes das colunas
+    col_fisico = encontrar_coluna(lubrificantes, "total")
+    col_sistema = encontrar_coluna(lubrificantes, "sistem")
+    col_kardex = encontrar_coluna(lubrificantes, "kardex")
+    col_nome = encontrar_coluna(lubrificantes, "lubrificante")
+
     cards_html = ""
     for _, row in lubrificantes.iterrows():
-        fisico = row["total"]
-        sistema = row["sistema"]
+        fisico = row[col_fisico]
+        sistema = row[col_sistema]
         diferenca = fisico - sistema
         max_value = max(fisico, sistema, 1)
         acuracidade = round((min(fisico, sistema) / max_value) * 100, 2)
         cards_html += f"""
         <div style='border: 1px solid #ddd; border-radius: 8px; padding: 8px; margin-bottom: 12px; min-width:330px; max-width:370px; display:inline-block; margin-right:12px;'>
-            <strong>{row['kardex']} - {row['lubrificante']}</strong><br>
+            <strong>{row[col_kardex]} - {row[col_nome]}</strong><br>
             Físico: {fisico} | Sistema: {sistema}<br>
             Diferença: {diferenca} | Acuracidade: {acuracidade}%
         </div>
@@ -90,9 +104,9 @@ def main():
     contabil = normalizar_colunas(contabil)
     lubrificantes = normalizar_colunas(lubrificantes)
 
-    # Exemplo para debug se necessário:
-    # print(contabil.columns)
-    # print(lubrificantes.columns)
+    # Debug: print nomes das colunas lidas para você ver
+    print("Colunas contábil:", contabil.columns.tolist())
+    print("Colunas lubrificantes:", lubrificantes.columns.tolist())
 
     valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas, acuracidade_contabil = calcular_totais(contabil)
     tabela = gerar_tabela(valor_fisico, valor_sistema, diferenca_contabil, sobras, faltas)
